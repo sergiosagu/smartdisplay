@@ -1,2 +1,2 @@
 # smartdisplay
-SmartDisplay DIY project
+[WIP] SmartDisplay DIY project
