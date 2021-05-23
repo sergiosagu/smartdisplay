@@ -58,7 +58,18 @@ public:
     void print(string msg, int msgDelay, byte brightness);
     void fadeIn(string msg);
     void fadeOut(string msg);
+    void fadeBlink(string msg);
+    void blink(string msg);
+    void slideLeft(string msg);
+    void slideRight(string msg);
+    void crack(string msg);
+    void term(string msg);
     void pause(byte seconds);
+    
+    string alignCenter(string txt);
+    string alignRight(string txt);
+    string alignLeft(string txt);
+    string alignJustify(string txt);
 
     void setBrightness(byte brightness);
     void writeChar(char aChar);

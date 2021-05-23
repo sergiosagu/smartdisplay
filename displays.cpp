@@ -1,10 +1,14 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 #include "displays.hpp"
 
 #ifdef WPI
 #include <wiringPi.h>
 #else
+
+#include <chrono>
+#include <thread>
 
 #define OUTPUT 1
 
@@ -13,34 +17,30 @@
 
 int piHiPri(const int pri)
 {
-    printf("piHiPri - pri '%i'\n", pri);
     return 0;
 }
 
 int wiringPiSetupGpio(void)
 {
-    printf("wiringPiSetupGpio\n");
     return 0;
 }
 
 void pinMode(int pin, int mode)
 {
-    printf("pinMode - pin '%i', mode '%i'\n", pin, mode);
 }
 
 void digitalWrite(int pin, int value)
 {
-    printf("digitalWrite - pin '%i', value '%i'\n", pin, value);
 }
 
 void delay(unsigned int howLong)
 {
-    printf("delay - howLong '%i'\n", howLong);
+    this_thread::sleep_for(chrono::milliseconds(howLong));
 }
 
 void delayMicroseconds(unsigned int howLong)
 {
-    printf("delayMicroseconds - howLong '%i'\n", howLong);
+    this_thread::sleep_for(chrono::microseconds(howLong));
 }
 
 #endif
@@ -60,7 +60,8 @@ Display::~Display()
 
 void Display::demo()
 {
-    string msg = " the cpp demo s ";
+    string txt = "quick demo";
+    string msg = alignCenter(txt);
 
     pause(1);
 
@@ -68,12 +69,32 @@ void Display::demo()
     print(msg, 2000, BRIGHTNESS_MAX);
     fadeOut(msg);
     pause(1);
+
+    slideLeft(txt);
+    slideRight(txt);
+    pause(1);
+
+    string msgl = alignLeft(txt);
+    for (int i = 0; i < 5; i++)
+        fadeBlink(msgl);
+    pause(1);
+
+    string msgr = alignRight(txt);
+    for (int i = 0; i < 5; i++)
+        blink(msgr);
+    pause(1);
+
+    crack(msg);
+    print(msg, 2000, BRIGHTNESS_MAX);
+    pause(1);
+
+    term(txt);
+    pause(1);
 }
 
 void Display::print(string msg, int msgDelay, byte brightness)
 {
-    // printf("smart print '%s', '%i', '%i'\n", msg, msgDelay, brightness);
-    cout << "smart print '" << msg << "'\n";
+    cout << "[" << msg << "] (" << msgDelay << "ms) (" << (unsigned int)brightness << ")\n";
     setBrightness(brightness);
     for (int i = 0; i < DISPLAY_SIZE; i++)
     {
@@ -98,15 +119,223 @@ void Display::fadeOut(string msg)
     }
 }
 
+void Display::fadeBlink(string msg)
+{
+    fadeIn(msg);
+    fadeOut(msg);
+}
+
+void Display::blink(string msg)
+{
+    print(msg, BLINK_DELAY, BRIGHTNESS_MIN);
+    print(msg, BLINK_DELAY, BRIGHTNESS_MAX);
+}
+
+void Display::slideLeft(string msg)
+{
+    msg = BLANK_DISPLAY + msg;
+    int size = msg.length();
+    for (int i = 0; i < size; i++)
+    {
+        string txt = "";
+        for (int j = 0; j < DISPLAY_SIZE; j++)
+        {
+            txt = txt + msg[(i + j) % size];
+        }
+        print(txt, SLIDE_DELAY, BRIGHTNESS_MAX);
+    }
+}
+
+void Display::slideRight(string msg)
+{
+    msg = msg + BLANK_DISPLAY;
+    int size = msg.length();
+    for (int i = size - 1; i >= 0; i--)
+    {
+        string txt = "";
+        for (int j = 0; j < DISPLAY_SIZE; j++)
+        {
+            txt = msg[((i - j) + size) % size] + txt;
+        }
+        print(txt, SLIDE_DELAY, BRIGHTNESS_MAX);
+    }
+}
+
+char randomChar()
+{
+    char c = (rand() % 36) + 65; // A to Z + 10 digits
+    if (c > 90)
+    {
+        c = (c - 91) + 48; // digits 0 to 9
+    }
+    return c;
+}
+
+string randomText(byte size)
+{
+    string txt = "";
+    for (int i = 0; i < size; i++)
+    {
+        txt += randomChar();
+    }
+    return txt;
+}
+
+string blankText(byte size)
+{
+    string txt = "";
+    txt.resize(size, ' ');
+    return txt;
+}
+
+void Display::crack(string msg)
+{
+    bool mask[DISPLAY_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    // initial cracking noise
+    for (int n = 0; n < CRACK_NOISE; n++)
+    {
+        print(randomText(DISPLAY_SIZE), CRACK_DELAY, BRIGHTNESS_MAX);
+    }
+
+    for (int i = 0; i < DISPLAY_SIZE; i++)
+    {
+        // pick the next char to crack
+        bool set = false;
+        while (!set)
+        {
+            byte pos = rand() % DISPLAY_SIZE;
+            if (mask[pos] == 0)
+            {
+                mask[pos] = 1;
+                set = true;
+            }
+        }
+        // cracking process with already cracked chars
+        for (int n = 0; n < CRACK_NOISE; n++)
+        {
+            string txt = "";
+            for (int j = 0; j < DISPLAY_SIZE; j++)
+            {
+                if (mask[j] == 0)
+                {
+                    txt += randomChar();
+                }
+                else
+                {
+                    txt += msg[j];
+                }
+            }
+            print(txt, CRACK_DELAY, BRIGHTNESS_MAX);
+        }
+    }
+}
+
+void Display::term(string msg)
+{
+    // initial blinks
+    for (int i = 0; i < TERM_BLINK; i++)
+        blink(alignLeft("_"));
+
+    int size = msg.length() + 1;
+    if (size > DISPLAY_SIZE)
+    {
+        size++; // one more loop cycle for the final cursor
+    }
+
+    string txt;
+    byte cursorAt = 0;
+
+    for (int i = 0; i < size; i++)
+    {
+        txt = "";
+        for (int j = 0; j < min(DISPLAY_SIZE - 1, i); j++)
+        {
+            if (i < DISPLAY_SIZE)
+            {
+                txt += msg[j];
+            }
+            else
+            {
+                txt += msg[j + i - DISPLAY_SIZE];
+            }
+        }
+        txt += "_";
+        cursorAt = txt.length() - 1;
+        txt += blankText(max(0, DISPLAY_SIZE - (i + 1)));
+        print(txt, TERM_DELAY, BRIGHTNESS_MAX);
+    }
+
+    // final blinks
+    for (int i = 0; i < (TERM_BLINK * 2); i++)
+    {
+        txt[cursorAt] = (i % 2 == 0) ? ' ' : '_';
+        print(txt, BLINK_DELAY, BRIGHTNESS_MAX);
+    }
+}
+
 void Display::pause(byte seconds)
 {
     print(BLANK_DISPLAY, seconds * 1000, BRIGHTNESS_MIN);
 }
 
+string Display::alignCenter(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    byte n = (DISPLAY_SIZE - size) / 2;
+    if ((DISPLAY_SIZE - size) % 2 == 0)
+    {
+        txt = blankText(n) + txt;
+    }
+    else
+    {
+        txt = blankText(n + 1) + txt;
+    }
+    return txt + blankText(n);
+}
+
+string Display::alignRight(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    return blankText(DISPLAY_SIZE - size) + txt;
+}
+
+string Display::alignLeft(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    return txt + blankText(DISPLAY_SIZE - size);
+}
+
+string Display::alignJustify(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    if (txt.find_first_of(BLANK_CHAR) != txt.find_last_of(BLANK_CHAR))
+    {
+        // justifies only two words separated by one single blank!
+        return txt;
+    }
+    txt.replace(txt.find_first_of(BLANK_CHAR), 1, blankText(DISPLAY_SIZE - size + 1));
+    return txt;
+}
+
 void Display::setBrightness(byte brightness)
 {
-    // printf("smart setBrightness '%i'\n", brightness);
-
     if (this->currentBrightness != brightness)
     {
         writeByte(BRIGHTNESS_MASK | brightness);
@@ -116,15 +345,11 @@ void Display::setBrightness(byte brightness)
 
 void Display::writeChar(char aChar)
 {
-    // printf("smart writeChar '%c'\n", aChar);
-
     writeByte(getChar(aChar));
 }
 
 char Display::getChar(char c)
 {
-    // printf("smart getChar '%c'\n", c);
-
     // ASCII from space to '?'
     if ((c >= 32) && (c <= 63))
     {
@@ -145,12 +370,10 @@ char Display::getChar(char c)
 
 void Display::writeByte(byte aByte)
 {
-    // printf("writeByte '%i' sclk '%i' data '%i' rset '%i'\n", aByte, this->sclk, this->data, this->rset);
     for (int i = 0; i < 8; i++)
     {
         bool bit = (((aByte >> (7 - i)) & 0x01) == 1);
         writeBit(bit);
-        // writeBit(bitRead(aByte, 7 - i));
     }
 }
 
@@ -168,8 +391,6 @@ void Display::writeBit(bool aBit)
 
 void Display::reset()
 {
-    // printf("-----reset sclk '%i' data '%i' rset '%i'\n", this->sclk, this->data, this->rset);
-
     digitalWrite(this->data, LOW);
     digitalWrite(this->sclk, LOW);
     digitalWrite(this->rset, LOW);
@@ -180,7 +401,6 @@ void Display::reset()
 
 void Display::init()
 {
-    // printf("superreset sclk '%i' data '%i' rset '%i'\n", this->sclk, this->data, this->rset);
     pinMode(this->sclk, OUTPUT);
     pinMode(this->data, OUTPUT);
     pinMode(this->rset, OUTPUT);

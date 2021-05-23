@@ -2,9 +2,12 @@
 
 int main(int argc, char const *argv[])
 {
+    srand(time(nullptr)); // init random generator
+
     Display::libSetup();
 
-    // Display d1(1, 2, 3);
+    // Display d1(2, 3, 4);
+    // Display d1(17, 27, 22);
     Display d1(10, 9, 11);
 
     d1.init();
