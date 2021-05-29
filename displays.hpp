@@ -45,13 +45,15 @@ const byte TERM_BLINK = 4;   // # of cursor blinks
 class Display
 {
 private:
+    byte id;
+    string name;
     byte sclk;
     byte data;
     byte rset;
     volatile byte currentBrightness = -1;
 
 public:
-    Display(byte sclk, byte data, byte rset);
+    Display(string name, byte sclk, byte data, byte rset);
     ~Display();
 
     void demo();
@@ -66,11 +68,6 @@ public:
     void term(string msg);
     void pause(byte seconds);
     
-    string alignCenter(string txt);
-    string alignRight(string txt);
-    string alignLeft(string txt);
-    string alignJustify(string txt);
-
     void setBrightness(byte brightness);
     void writeChar(char aChar);
     char getChar(char c);
@@ -81,4 +78,9 @@ public:
     void init();
 
     static void libSetup();
+
+    static string alignCenter(string txt);
+    static string alignRight(string txt);
+    static string alignLeft(string txt);
+    static string alignJustify(string txt);
 };

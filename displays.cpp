@@ -4,16 +4,45 @@
 #include "displays.hpp"
 
 #ifdef WPI
+
 #include <wiringPi.h>
+
+#define CONSOLE(x) \
+    do             \
+    {              \
+    } while (0)
+
 #else
 
 #include <chrono>
 #include <thread>
+#include <mutex>
+#include <ncurses.h>
 
 #define OUTPUT 1
 
 #define LOW 0
 #define HIGH 1
+
+#define CONSOLE(x) (x)
+
+std::mutex consoleMutex;
+
+void consoleSetup()
+{
+    initscr();
+    cbreak();
+    noecho();
+    curs_set(0);
+
+    clear();
+    refresh();
+}
+
+/* 
+ * Mock methods from the wiringPi interface for the non-Raspberry Pi environments. 
+ * See https://github.com/WiringPi/WiringPi/blob/master/wiringPi/wiringPi.h
+ */
 
 int piHiPri(const int pri)
 {
@@ -47,8 +76,12 @@ void delayMicroseconds(unsigned int howLong)
 
 using namespace std;
 
-Display::Display(byte sclk, byte data, byte rset)
+byte displayCounter = 0;
+
+Display::Display(string name, byte sclk, byte data, byte rset)
 {
+    this->id = displayCounter++;
+    this->name = name;
     this->sclk = sclk;
     this->data = data;
     this->rset = rset;
@@ -94,7 +127,12 @@ void Display::demo()
 
 void Display::print(string msg, int msgDelay, byte brightness)
 {
-    cout << "[" << msg << "] (" << msgDelay << "ms) (" << (unsigned int)brightness << ")\n";
+    // cout << "{" << (unsigned int)id << "} [" << msg << "] (" << msgDelay << "ms) (" << (unsigned int)brightness << ")" << endl;
+    CONSOLE(consoleMutex.lock());
+    CONSOLE(mvprintw((unsigned int)id, 0, "{%s} [%s] (delay %i ms) (brightness %i)          ", name.c_str(), msg.c_str(), msgDelay, (unsigned int)brightness));
+    CONSOLE(refresh());
+    CONSOLE(consoleMutex.unlock());
+
     setBrightness(brightness);
     for (int i = 0; i < DISPLAY_SIZE; i++)
     {
@@ -135,8 +173,9 @@ void Display::slideLeft(string msg)
 {
     msg = BLANK_DISPLAY + msg;
     int size = msg.length();
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < (size + 1); i++)
     {
+        // TODO - replace with substring
         string txt = "";
         for (int j = 0; j < DISPLAY_SIZE; j++)
         {
@@ -150,8 +189,9 @@ void Display::slideRight(string msg)
 {
     msg = msg + BLANK_DISPLAY;
     int size = msg.length();
-    for (int i = size - 1; i >= 0; i--)
+    for (int i = size - 1; i >= -1; i--)
     {
+        // TODO - replace with substring
         string txt = "";
         for (int j = 0; j < DISPLAY_SIZE; j++)
         {
@@ -249,6 +289,7 @@ void Display::term(string msg)
     for (int i = 0; i < size; i++)
     {
         txt = "";
+        // TODO - replace with substring
         for (int j = 0; j < min(DISPLAY_SIZE - 1, i); j++)
         {
             if (i < DISPLAY_SIZE)
@@ -279,61 +320,6 @@ void Display::pause(byte seconds)
     print(BLANK_DISPLAY, seconds * 1000, BRIGHTNESS_MIN);
 }
 
-string Display::alignCenter(string txt)
-{
-    int size = txt.length();
-    if (size >= DISPLAY_SIZE)
-    {
-        return txt;
-    }
-    byte n = (DISPLAY_SIZE - size) / 2;
-    if ((DISPLAY_SIZE - size) % 2 == 0)
-    {
-        txt = blankText(n) + txt;
-    }
-    else
-    {
-        txt = blankText(n + 1) + txt;
-    }
-    return txt + blankText(n);
-}
-
-string Display::alignRight(string txt)
-{
-    int size = txt.length();
-    if (size >= DISPLAY_SIZE)
-    {
-        return txt;
-    }
-    return blankText(DISPLAY_SIZE - size) + txt;
-}
-
-string Display::alignLeft(string txt)
-{
-    int size = txt.length();
-    if (size >= DISPLAY_SIZE)
-    {
-        return txt;
-    }
-    return txt + blankText(DISPLAY_SIZE - size);
-}
-
-string Display::alignJustify(string txt)
-{
-    int size = txt.length();
-    if (size >= DISPLAY_SIZE)
-    {
-        return txt;
-    }
-    if (txt.find_first_of(BLANK_CHAR) != txt.find_last_of(BLANK_CHAR))
-    {
-        // justifies only two words separated by one single blank!
-        return txt;
-    }
-    txt.replace(txt.find_first_of(BLANK_CHAR), 1, blankText(DISPLAY_SIZE - size + 1));
-    return txt;
-}
-
 void Display::setBrightness(byte brightness)
 {
     if (this->currentBrightness != brightness)
@@ -350,6 +336,7 @@ void Display::writeChar(char aChar)
 
 char Display::getChar(char c)
 {
+    // TODO - add a small cache
     // ASCII from space to '?'
     if ((c >= 32) && (c <= 63))
     {
@@ -416,4 +403,61 @@ void Display::libSetup()
 {
     piHiPri(99);
     wiringPiSetupGpio();
+
+    CONSOLE(consoleSetup());
+}
+
+string Display::alignCenter(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    byte n = (DISPLAY_SIZE - size) / 2;
+    if ((DISPLAY_SIZE - size) % 2 == 0)
+    {
+        txt = blankText(n) + txt;
+    }
+    else
+    {
+        txt = blankText(n + 1) + txt;
+    }
+    return txt + blankText(n);
+}
+
+string Display::alignRight(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    return blankText(DISPLAY_SIZE - size) + txt;
+}
+
+string Display::alignLeft(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    return txt + blankText(DISPLAY_SIZE - size);
+}
+
+string Display::alignJustify(string txt)
+{
+    int size = txt.length();
+    if (size >= DISPLAY_SIZE)
+    {
+        return txt;
+    }
+    if (txt.find_first_of(BLANK_CHAR) != txt.find_last_of(BLANK_CHAR))
+    {
+        // justifies only two words separated by one single blank!
+        return txt;
+    }
+    txt.replace(txt.find_first_of(BLANK_CHAR), 1, blankText(DISPLAY_SIZE - size + 1));
+    return txt;
 }

@@ -14,6 +14,13 @@ These define the interface and implementation related to the VFD modules. Essent
 - Fade-in, fade-out and blink with fade effect a message.
 - "Crack" a message, like deciphering it.
 - Print a text like in a terminal.
+### providers.hpp providers.cpp
+These define the interface and implementation related to the providers of the data that will be displayed. Essentially, they provide the functionality to retrieve different data from different sources. Some examples are:
+- Date and time
+- Weather
+- Quote of the day
+- Stocks
+- Push messages
 ### smartdisplay.cpp
 Main application combining the previous functionality.
 ## Build & Run
