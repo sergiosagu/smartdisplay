@@ -4,9 +4,12 @@
 
 void topThread(Display d)
 {
+    string ip;
+    ip = Display::alignCenter(Provider::getIp());
     for (;;)
     {
-        d.demo();
+        d.fadeBlink(ip);
+        // d.demo();
         // d.fadeBlink(Display::alignCenter(Provider::getTime()));
     }
 }

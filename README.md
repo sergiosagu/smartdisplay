@@ -24,25 +24,47 @@ These define the interface and implementation related to the providers of the da
 ### smartdisplay.cpp
 Main application combining the previous functionality.
 ## Build & Run
+### Prerequisites
+- WiringPi (only in your Raspberry Pi)
+```
+sudo apt-get install wiringpi
+```
+- ncurses
+```
+sudo apt-get install libncurses5-dev
+```
+- jsoncpp
+```
+sudo apt-get install libjsoncpp-dev
+```
+- curl
+```
+sudo apt-get install libcurl4-openssl-dev
+```
+### Commands
+#### From your dev environment
 Build the project (no WiringPi library needed)
 ```
+$ make clean
 $ make
-```
-Push the sources to your Raspberry Pi (to `/root/smartdisplay/`)
-```
-$ make push RPI_IP=172.16.0.1
-```
-Build the project from your Raspberry Pi (WiringPi library needs to be installed)
-```
-$ make RPI=true
 ```
 Run the project
 ```
 $ ./smartdisplay
 ```
-Clean the project
+Push the sources to your Raspberry Pi (to `/root/smartdisplay/`)
+```
+$ make push RPI_IP=172.16.0.1
+```
+#### From your Raspberry Pi
+Build the project (WiringPi library needed!)
 ```
 $ make clean
+$ make RPI=true
+```
+Run the project
+```
+$ ./smartdisplay
 ```
 ## Result
 *Coming soon!*

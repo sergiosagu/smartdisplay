@@ -3,7 +3,7 @@ CC = g++
 ifdef RPI
 CFLAGS = -Wall -pthread
 WPIFLAG = -DWPI
-LDFLAGS =
+LDFLAGS = -lwiringPi
 else
 CFLAGS = -Wall -pthread -g
 WPIFLAG =
@@ -19,10 +19,10 @@ smartdisplay.o: smartdisplay.cpp
 	$(CC) $(CFLAGS) -c smartdisplay.cpp
 
 displays.o: displays.cpp displays.hpp
-	$(CC) $(CFLAGS) -c displays.cpp $(WPIFLAG) $(LDFLAGS)
+	$(CC) $(CFLAGS) -c displays.cpp $(WPIFLAG) 
 
 providers.o: providers.cpp providers.hpp
-	$(CC) $(CFLAGS) -c providers.cpp
+	$(CC) $(CFLAGS) -c providers.cpp -ljsoncpp -lcurl
 
 clean:
 	$(RM) smartdisplay *.o *~ *.h*.gch

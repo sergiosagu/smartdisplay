@@ -2,6 +2,8 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <curl/curl.h>
+#include <jsoncpp/json/json.h>
 #include "providers.hpp"
 
 Provider::Provider()
@@ -17,39 +19,36 @@ string Provider::getIp()
     return "172.16.0.1";
 }
 
-struct tm *getLocaltime()
+string Provider::getTimeInfo(string format)
 {
     time_t rawtime;
     time(&rawtime);
-    return localtime(&rawtime);
-}
 
-string Provider::getTime()
-{
     tm *timeinfo;
-    timeinfo = getLocaltime();
-    char buffer[32];
-    strftime(buffer, sizeof(buffer), "%T", timeinfo);
+    timeinfo = localtime(&rawtime);
+
+    char buffer[16];
+    strftime(buffer, sizeof(buffer), format.c_str(), timeinfo);
     string s(buffer);
     return s;
 }
 
-string Provider::getDate()
+string Provider::getBtcExchangeRate(string currency)
 {
-    tm *timeinfo;
-    timeinfo = getLocaltime();
-    char buffer[32];
-    strftime(buffer, sizeof(buffer), "%F", timeinfo);
-    string s(buffer);
-    return s;
+    return "404";
 }
 
-string Provider::getDateTime()
+string Provider::getTemperature(string city)
 {
-    tm *timeinfo;
-    timeinfo = getLocaltime();
-    char buffer[32];
-    strftime(buffer, sizeof(buffer), "%a %b %e %R", timeinfo);
-    string s(buffer);
-    return s;
+    return "404";
+}
+
+string Provider::getQuoteOfTheDay()
+{
+    return "404";
+}
+
+string Provider::getStocks()
+{
+    return "404";
 }
