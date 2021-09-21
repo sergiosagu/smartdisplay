@@ -12,6 +12,9 @@ const string DATE2 = "%d/%m/%Y";              // "25/12/2020"
 const string TIMEDATE1 = "%a %d %b %R";       // "Thu 24 Jun 17:30"
 const string TIMEDATE2 = TIME2 + " " + DATE2; // "17:30 24/06/2021"
 
+const string ETH0 = "eth0";
+const string WLAN0 = "wlan0";
+
 const string EXCHANGE_URL = "https://api.cryptonator.com/api/ticker/";
 const string USD = "btc-usd";
 const string EUR = "btc-eur";

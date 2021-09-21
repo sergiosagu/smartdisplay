@@ -57,7 +57,7 @@ public:
     ~Display();
 
     void demo();
-    void print(string msg, int msgDelay, byte brightness);
+    void print(string msg, int millis, byte brightness);
     void fadeIn(string msg);
     void fadeOut(string msg);
     void fadeBlink(string msg);
@@ -67,12 +67,6 @@ public:
     void crack(string msg);
     void term(string msg);
     void pause(byte seconds);
-    
-    void setBrightness(byte brightness);
-    void writeChar(char aChar);
-    char getChar(char c);
-    void writeByte(byte aByte);
-    void writeBit(bool aBit);
 
     void reset();
     void init();
@@ -83,4 +77,26 @@ public:
     static string alignRight(string txt);
     static string alignLeft(string txt);
     static string alignJustify(string txt);
+
+protected:
+    void setBrightness(byte brightness);
+    void writeChar(char aChar);
+    virtual char getChar(char c);
+    void writeByte(byte aByte);
+    void writeBit(bool aBit);
+
+    virtual char randomChar();
+    string randomText(byte size);
+    static string blankText(byte size);
+};
+
+class DotDisplay : public Display
+{
+public:
+    DotDisplay(string name, byte sclk, byte data, byte rset);
+    ~DotDisplay();
+
+protected:
+    char getChar(char c) override;
+    char randomChar() override;
 };

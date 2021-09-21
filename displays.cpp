@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+
 #include "displays.hpp"
 
 #ifdef WPI
@@ -93,7 +94,7 @@ Display::~Display()
 
 void Display::demo()
 {
-    string txt = "quick demo";
+    string txt = "Quick Demo";
     string msg = alignCenter(txt);
 
     pause(1);
@@ -125,11 +126,10 @@ void Display::demo()
     pause(1);
 }
 
-void Display::print(string msg, int msgDelay, byte brightness)
+void Display::print(string msg, int millis, byte brightness)
 {
-    // cout << "{" << (unsigned int)id << "} [" << msg << "] (" << msgDelay << "ms) (" << (unsigned int)brightness << ")" << endl;
     CONSOLE(consoleMutex.lock());
-    CONSOLE(mvprintw((unsigned int)id, 0, "{%s} [%s] (delay %i ms) (brightness %i)          ", name.c_str(), msg.c_str(), msgDelay, (unsigned int)brightness));
+    CONSOLE(mvprintw((unsigned int)id, 0, "{%s} [%s] (delay %i ms) (brightness %i)          ", name.c_str(), msg.c_str(), millis, (unsigned int)brightness));
     CONSOLE(refresh());
     CONSOLE(consoleMutex.unlock());
 
@@ -138,7 +138,7 @@ void Display::print(string msg, int msgDelay, byte brightness)
     {
         writeChar(msg[i]);
     }
-    delay(msgDelay);
+    delay(millis);
 }
 
 void Display::fadeIn(string msg)
@@ -201,7 +201,7 @@ void Display::slideRight(string msg)
     }
 }
 
-char randomChar()
+char Display::randomChar()
 {
     char c = (rand() % 36) + 65; // A to Z + 10 digits
     if (c > 90)
@@ -211,7 +211,7 @@ char randomChar()
     return c;
 }
 
-string randomText(byte size)
+string Display::randomText(byte size)
 {
     string txt = "";
     for (int i = 0; i < size; i++)
@@ -221,7 +221,7 @@ string randomText(byte size)
     return txt;
 }
 
-string blankText(byte size)
+string Display::blankText(byte size)
 {
     string txt = "";
     txt.resize(size, ' ');
@@ -397,6 +397,8 @@ void Display::init()
     writeByte(COUNTER_CONTROL);
     writeByte(POINTER_CONTROL);
     setBrightness(BRIGHTNESS_MAX);
+
+    print(BLANK_DISPLAY, 10, BRIGHTNESS_MIN);
 }
 
 void Display::libSetup()
@@ -460,4 +462,37 @@ string Display::alignJustify(string txt)
     }
     txt.replace(txt.find_first_of(BLANK_CHAR), 1, blankText(DISPLAY_SIZE - size + 1));
     return txt;
+}
+
+DotDisplay::DotDisplay(string name, byte sclk, byte data, byte rset) : Display(name, sclk, data, rset)
+{
+}
+
+DotDisplay::~DotDisplay()
+{
+}
+
+char DotDisplay::getChar(char c)
+{
+    // TODO - add a small cache
+    // direct ASCII mapping
+    if ((c >= 32) && (c <= 127))
+    {
+        return c;
+    }
+    return 63; // '?'
+}
+
+char DotDisplay::randomChar()
+{
+    char c = (rand() % 62) + 65; // A to Z + a to z + 10 digits
+    if ((c > 90) && (c < 97))
+    {
+        c = (c - 91) + 48; // digits 0 to 5
+    }
+    else if (c > 122)
+    {
+        c = (c - 123) + 54; // digits 6 to 9
+    }
+    return c;
 }
